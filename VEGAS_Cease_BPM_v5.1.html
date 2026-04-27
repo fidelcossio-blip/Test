@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VEGAS Cease — Unified BPM v5.1</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#eef1f5;color:#1e293b;overflow:hidden;height:100vh}
+#app{display:flex;flex-direction:column;height:100vh}
+
+/* ──Top Panel ──*/
+#panel{height:200px;min-height:200px;background:#fff;border-bottom:1px solid #e2e5eb;display:flex;overflow:hidden;flex-shrink:0}
+#ph{padding:12px 16px 10px;border-right:1px solid #eef0f4;width:210px;flex-shrink:0;display:flex;flex-direction:column}
+#ph h1{font-size:13px;font-weight:700;color:#0f172a}
+#ph p{font-size:10px;color:#94a3b8;margin-top:2px;line-height:1.35}
+#lg{display:flex;gap:9px;margin-top:auto;flex-wrap:wrap}
+.lg{display:flex;align-items:center;gap:3px;font-size:8.5px;color:#94a3b8}
+.lb{width:15px;height:10px;border-radius:3px;border:1.5px solid #adb5c4;background:#fff}
+.ldm{width:10px;height:10px;border:1.5px solid #adb5c4;transform:rotate(45deg);border-radius:2px;background:#fff}
+.lc{width:11px;height:11px;border-radius:50%;background:#dfe3ea;border:1.5px solid #adb5c4}
+.lann{width:15px;height:10px;border-radius:7px;border:1.5px dashed #a78bfa;background:#f5f3ff}
+#slist{padding:5px 8px;overflow-y:auto;flex:1;display:flex;flex-wrap:wrap;align-content:flex-start;gap:1px}
+.si{display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:7px;cursor:pointer;transition:background .15s;border:2px solid transparent;width:calc(50% - 1px)}
+.si:hover{background:#f1f5f9}
+.si.sel{background:var(--sc-bg);border-color:var(--sc)}
+.sd{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.sn{font-size:11px;font-weight:500;flex:1;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sf{font-size:8.5px;color:#94a3b8;background:#f1f5f9;padding:1px 5px;border-radius:6px}
+.si.sel .sf{background:rgba(255,255,255,.5)}
+.sc{font-size:7px;font-weight:700;padding:1px 4px;border-radius:3px;letter-spacing:.3px}
+.cA{background:#dcfce7;color:#16a34a}.cB{background:#fef3c7;color:#d97706}.cC{background:#fce7f3;color:#db2777}
+.rb{display:none;margin:3px 8px;padding:4px;border:1px solid #e2e5eb;border-radius:5px;background:#f8fafc;color:#64748b;font-size:9.5px;cursor:pointer;text-align:center;font-weight:500;flex-shrink:0}
+.rb:hover{background:#eef0f4}.rb.vis{display:block}
+#det{padding:8px 14px;border-left:1px solid #eef0f4;overflow-y:auto;width:320px;flex-shrink:0;display:none}
+#det.vis{display:block}
+#det h3{font-size:12px;font-weight:700;margin-bottom:3px}
+#det .dd{font-size:11px;line-height:1.45;color:#475569;margin-bottom:6px}
+#det .stl{font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#94a3b8;margin-bottom:3px}
+.sti{display:flex;gap:5px;margin-bottom:4px;font-size:10.5px;line-height:1.3;color:#334155}
+.stnum{width:17px;height:17px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;flex-shrink:0;background:#f1f5f9;color:#64748b;border:1.5px solid #e2e5eb}
+
+/* ──Diagram ──*/
+#diagram-area{flex:1;overflow:auto;background:#eef1f5}
+#diagram{position:relative;margin:10px}
+#edges-svg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
+.gdot{fill:#eef1f5}
+.edge{fill:none;stroke:#bfc5d1;stroke-width:1.8;transition:stroke .3s,stroke-width .3s,opacity .3s}
+.edge.active{stroke-width:2.6}
+.edge.dimmed{opacity:.08}
+.edge.dashed{stroke-dasharray:5,4}
+.elbl{font-size:8.5px;fill:#8896a8;font-weight:600;transition:fill .3s,opacity .3s}
+.elbl.active{font-weight:700}
+.elbl.dimmed{opacity:.08}
+marker polygon{fill:#bfc5d1}
+
+/* ──Nodes ──*/
+.nd{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;transition:all .3s;cursor:default;z-index:2}
+.nd.task{background:#fff;border:2px solid #cdd3de;border-radius:10px;padding:4px 8px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.nd.event{background:#dfe3ea;border:2.5px solid #adb5c4;border-radius:20px;padding:3px 12px}
+.nd.gw{background:#fff;border:2.5px solid #adb5c4;transform:rotate(45deg);border-radius:4px}
+.nd.gw .gi{transform:rotate(-45deg);display:flex;flex-direction:column;align-items:center;justify-content:center}
+.nd.ann{background:#f5f3ff;border:2px dashed #a78bfa;border-radius:14px;padding:4px 10px}
+.nl{font-size:10.5px;font-weight:600;line-height:1.15;color:#334155}
+.ns{font-size:8.5px;color:#8896a8;line-height:1.1;margin-top:1px}
+.nd.event .nl{font-size:10px;font-weight:700;letter-spacing:.7px;color:#64748b}
+.nd.gw .nl{font-size:8.5px;font-weight:700;color:#64748b;line-height:1.05}
+.nd.ann .nl{font-size:9.5px;font-weight:700;color:#7c3aed;line-height:1.1}
+.nd.ann .ns{color:#a78bfa;font-size:8px}
+.nd.dimmed{opacity:.12}
+.nd.active{box-shadow:0 0 0 3px var(--sc),0 2px 10px rgba(0,0,0,.1)}
+.nd.active.task{border-color:var(--sc);background:var(--sc-bg)}
+.nd.active.event{border-color:var(--sc);background:var(--sc-bg)}
+.nd.active.gw{border-color:var(--sc);background:var(--sc-bg)}
+.nd.active.ann{border-color:var(--sc);background:var(--sc-bg)}
+.nd.active .nl{color:var(--sc-dk)}
+.nd.active .ns{color:var(--sc-dk);opacity:.7}
+
+/* ──Info icon ──*/
+.ii{position:absolute;top:-5px;right:-5px;width:15px;height:15px;border-radius:50%;background:#e0e7ff;color:#6366f1;font-size:8.5px;font-weight:800;display:flex;align-items:center;justify-content:center;border:1.5px solid #a5b4fc;pointer-events:none;font-style:italic;line-height:1;z-index:3}
+.nd.gw .ii{top:-7px;right:-7px;transform:rotate(-45deg)}
+
+/* ──Tooltip ──*/
+#tip{position:fixed;max-width:370px;background:#1e293b;color:#e2e8f0;font-size:11.5px;padding:13px 16px;border-radius:9px;pointer-events:none;display:none;z-index:200;line-height:1.5;box-shadow:0 6px 24px rgba(0,0,0,.3)}
+#tip b{color:#93c5fd;font-weight:600}
+#tip .tt{font-size:12.5px;font-weight:700;color:#fff;margin-bottom:5px;display:block}
+#tip .tq{margin-top:7px;padding-top:7px;border-top:1px solid #334155;font-size:10.5px;color:#fbbf24;font-style:italic}
+
+/* ──Edit Mode ──*/
+#edit-bar{display:flex;gap:6px;margin-top:6px}
+.ebtn{padding:3px 10px;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;border:1.5px solid #cbd5e1;background:#fff;color:#475569;transition:all .15s}
+.ebtn:hover{background:#f1f5f9}
+.ebtn.on{background:#4f46e5;color:#fff;border-color:#4f46e5}
+.ebtn.exp{background:#059669;color:#fff;border-color:#059669}
+.ebtn.exp:hover{background:#047857}
+body.editmode .nd{cursor:pointer}
+body.editmode .nd:hover{outline:2px solid #818cf8;outline-offset:2px}
+body.editmode .nd.gw:hover{outline-offset:4px}
+
+/* ──Edit Modal ──*/
+#emodal-bg{display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:300;justify-content:center;align-items:center}
+#emodal-bg.vis{display:flex}
+#emodal{background:#fff;border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.2);width:560px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden}
+#emodal-head{padding:14px 18px 10px;border-bottom:1px solid #e2e5eb;display:flex;justify-content:space-between;align-items:center}
+#emodal-head h3{font-size:14px;font-weight:700;color:#0f172a}
+#emodal-head .eid{font-size:10px;color:#94a3b8;background:#f1f5f9;padding:2px 8px;border-radius:4px;margin-left:8px}
+#emodal-close{width:28px;height:28px;border:none;background:#f1f5f9;border-radius:7px;font-size:16px;cursor:pointer;color:#64748b;display:flex;align-items:center;justify-content:center}
+#emodal-close:hover{background:#e2e5eb}
+#emodal-body{padding:14px 18px;overflow-y:auto;flex:1}
+.erow{margin-bottom:12px}
+.erow label{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#94a3b8;margin-bottom:4px}
+.erow input,.erow textarea{width:100%;border:1.5px solid #e2e5eb;border-radius:7px;padding:8px 10px;font-size:12px;font-family:'Segoe UI',system-ui,sans-serif;color:#1e293b;transition:border-color .15s;resize:vertical}
+.erow input:focus,.erow textarea:focus{outline:none;border-color:#818cf8}
+.erow textarea{min-height:120px;font-size:11.5px;line-height:1.5}
+.erow .hint{font-size:9px;color:#94a3b8;margin-top:3px}
+#emodal-foot{padding:10px 18px 14px;border-top:1px solid #e2e5eb;display:flex;justify-content:flex-end;gap:8px}
+#emodal-foot button{padding:6px 16px;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;border:1.5px solid #e2e5eb;background:#fff;color:#475569}
+#emodal-foot button:hover{background:#f1f5f9}
+#emodal-foot .save{background:#4f46e5;color:#fff;border-color:#4f46e5}
+#emodal-foot .save:hover{background:#4338ca}
+
+/* ──Export Modal ──*/
+#xmodal-bg{display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:300;justify-content:center;align-items:center}
+#xmodal-bg.vis{display:flex}
+#xmodal{background:#fff;border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.2);width:700px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden}
+#xmodal-head{padding:14px 18px 10px;border-bottom:1px solid #e2e5eb;display:flex;justify-content:space-between;align-items:center}
+#xmodal-head h3{font-size:14px;font-weight:700;color:#0f172a}
+#xmodal-close{width:28px;height:28px;border:none;background:#f1f5f9;border-radius:7px;font-size:16px;cursor:pointer;color:#64748b;display:flex;align-items:center;justify-content:center}
+#xmodal-close:hover{background:#e2e5eb}
+#xmodal-body{padding:14px 18px;overflow-y:auto;flex:1}
+#xmodal-body textarea{width:100%;min-height:400px;border:1.5px solid #e2e5eb;border-radius:7px;padding:10px;font-size:11px;font-family:'Consolas','Monaco',monospace;color:#1e293b;line-height:1.45;resize:vertical;background:#f8fafc}
+#xmodal-body textarea:focus{outline:none;border-color:#818cf8}
+#xmodal-foot{padding:10px 18px 14px;border-top:1px solid #e2e5eb;display:flex;justify-content:flex-end;gap:8px}
+#xmodal-foot button{padding:6px 16px;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;border:1.5px solid #e2e5eb;background:#fff;color:#475569}
+#xmodal-foot button:hover{background:#f1f5f9}
+#xmodal-foot .copy{background:#059669;color:#fff;border-color:#059669}
+#xmodal-foot .copy:hover{background:#047857}
+</style>
+</head>
+<body>
+<div id="app">
+<div id="panel">
+<div id="ph">
+  <h1>VEGAS Cease — Unified BPM v5.1</h1>
+  <p>Hover <i style="color:#6366f1;font-weight:700">ⓘ</i> nodes for details<br>Click scenario to highlight path</p>
+  <div id="lg">
+    <div class="lg"><div class="lb"></div>Task</div>
+    <div class="lg"><div class="ldm"></div>Decision</div>
+    <div class="lg"><div class="lc"></div>Event</div>
+    <div class="lg"><div class="lann"></div>Path Type</div>
+  </div>
+  <div id="edit-bar">
+    <button class="ebtn" id="edit-toggle" onclick="toggleEdit()">Edit Mode</button>
+    <button class="ebtn exp" id="export-btn" style="display:none" onclick="showExport()">Export Changes</button>
+  </div>
+</div>
+<div style="display:flex;flex-direction:column;flex:1;overflow:hidden">
+  <div id="slist"></div>
+  <div class="rb" id="rb" onclick="clearSel()">Clear Selection</div>
+</div>
+<div id="det"></div>
+</div>
+
+<div id="diagram-area">
+<div id="diagram">
+<svg id="edges-svg"><defs>
+<marker id="aw" markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#bfc5d1"/></marker>
+</defs></svg>
+</div>
+</div>
+<div id="tip"></div>
+
+<!-- Edit Modal -->
+<div id="emodal-bg" onclick="if(event.target===this)closeEdit()">
+<div id="emodal">
+  <div id="emodal-head"><h3>Edit Node <span class="eid" id="emodal-id"></span></h3><button id="emodal-close" onclick="closeEdit()">&times;</button></div>
+  <div id="emodal-body">
+    <div class="erow"><label>Label</label><input type="text" id="ef-label" placeholder="Node label (use \n for line breaks)"></div>
+    <div class="erow"><label>Subtitle</label><input type="text" id="ef-sub" placeholder="Subtitle text (e.g. system names)"></div>
+    <div class="erow"><label>Tooltip Content (HTML)</label><textarea id="ef-tip" placeholder="HTML tooltip content..."></textarea><div class="hint">Use HTML tags: &lt;b&gt;bold&lt;/b&gt;, &lt;br&gt; for line breaks, &lt;span class="tt"&gt;Title&lt;/span&gt;, &lt;span class="tq"&gt;Question&lt;/span&gt;</div></div>
+  </div>
+  <div id="emodal-foot"><button onclick="closeEdit()">Cancel</button><button class="save" onclick="saveEdit()">Save</button></div>
+</div>
+</div>
+
+<!-- Export Modal -->
+<div id="xmodal-bg" onclick="if(event.target===this)closeExport()">
+<div id="xmodal">
+  <div id="xmodal-head"><h3>Export Node Definitions</h3><button id="xmodal-close" onclick="closeExport()">&times;</button></div>
+  <div id="xmodal-body"><textarea id="xmodal-code" readonly></textarea><div class="hint" style="margin-top:6px">Copy this code and replace the <b>const N={...};</b> block in the HTML file to apply your changes.</div></div>
+  <div id="xmodal-foot"><button onclick="closeExport()">Close</button><button class="copy" onclick="copyExport()">Copy to Clipboard</button></div>
+</div>
+</div>
+
+</div>
+<script>
+// ═══════════════════════════════════════
+// GRID SYSTEM
+// ═══════════════════════════════════════
+const TW=180,TH=46;
+const GX=Math.round(0.75*TW); // 135px
+const GY=Math.round(1.5*TH);  // 69px
+const OX=70,OY=50;
+const GCOLS=32,GROWS=17;
+
+function gp(gc,gr){return{x:OX+gc*GX,y:OY+gr*GY}}
+
+const SZ={task:{w:180,h:46},gw:{w:64,h:64},event:{w:76,h:34},ann:{w:160,h:36}};
+
+// ═══════════════════════════════════════
+// NODES — grid positions (gc,gr)
+// ═══════════════════════════════════════
+const N={
+start:{gc:0,gr:8,t:'event',l:'START',tip:'<span class="tt">Process Start</span>VEGAS Cease ticket is auto-assigned via <b>Synapse</b> to the FFH CE Offline team. Agent picks up the next available ticket.<br><br><b>Deferred tickets</b> from previous days appear first — follow-ups from routing to external teams.'},
+receive:{gc:2,gr:8,t:'task',l:'Receive Ticket',s:'Synapse',tip:'<span class="tt">Receive Ticket via Synapse</span>Open <b>Synapse</b> → ticket is auto-assigned. Assign your name, tag as <b>In Progress</b>, set priority to <b>Critical</b>.<br><br>Note the <b>EC ID</b> and <b>Trouble Ticket #</b> used to search the case in the other systems.<br><br><b>Deferred tickets:</b> Appear automatically under your name with status "Deferred".'},
+review:{gc:4,gr:8,t:'task',l:'Review Request Details',s:'OPS Remedy · CASA ',tip:'<span class="tt">Review Request Details</span><b>1. OPS Remedy:</b> FFHC Offline bean → Search by EC ID → Open Trouble Ticket → Read submitter notes and all notes after that.<br><br><b>2. CASA:</b> EC ID → Notes → View All → Find the original request filtering by submitter agent ID and date. Retrieve all notes after that one.<br><br><b>Understand request and current status :</b> Understand the original request, check if external team responded. Read worklog for resolution, past actions, new errors, or instructions.'},
+g_info:{gc:6,gr:8,t:'gw',l:'Info OK?',tip:'<span class="tt">Decision: Is Information Complete?</span>While reviewing notes, determine if sufficient details exist to proceed.<br><br><b>Complete:</b> Clear request, EC ID confirmed, services to cease identified → proceed.<br><br><b>Missing:</b> No notes from submitter, unclear request, no consent, conflicting info, service to cease is not clear → investigate or contact customer to clarify.'},
+assess:{gc:8,gr:8,t:'task',l:'Assess Account State',s:'CSR Desktop · FIFA 360',tip:'<span class="tt">Assess Account State</span><b>CSR Desktop:</b> EC ID → Services → Check is the specific services are Active or Ceased. Look for dangling promo codes, equipment, pending items.<br><br><b>IF services are still active, then check FIFA 360:</b> EC ID → Customer tab → Review all orders:<br>• Identify the Cease orders (Contains Delete action and match with request date)<br>• Check the order status: Processed vs. Processing<br>• Note date delays (created vs. drop date)<br>• Note equipment returns'},
+g_req:{gc:10,gr:8,t:'gw',l:'RequestType?',tip:'<span class="tt">Decision: Request Type</span>Determine from Request Details and Account State what kind of request this is. Each path type (purple labels) has specific handling — hover them for details on identification and processing.'},
+ann_std:{gc:12,gr:8,t:'ann',l:'Standard',s:'Most common',tip:'<span class="tt">Path: Standard Cease</span><b>How to identify:</b> Submitter requests cancellation of services. No special conditions — not a change of mind, no WHSIA equipment, no Collection flag, no cancel-pending request.<br><br><b>What to do:</b> Proceed to Account State assessment. Sub-path depends on Active, Already Ceased, Stuck, Pending, or BAN Open.'},
+g_st:{gc:14,gr:8,t:'gw',l:'Account\nState?',tip:'<span class="tt">Decision: Account State</span>Based on CSR and F360:<br><br>• <b>Active</b> — services running, no existing order → process cease<br>• <b>Already Ceased</b> — all disconnected → skip to verify<br>• <b>Stuck</b> — order in "Processing" → diagnose error<br>• <b>Pending</b> — future-dated order → validate date<br>• <b>BAN Open</b> — services ceased but BAN active → investigate DT1'},
+proc:{gc:16,gr:8,t:'task',l:'Process Cease in CSR',s:'Active / Partial',tip:'<span class="tt">Process Cease in CSR Desktop</span>Select services → <b>Manage Sales Activity</b> → add submitter name/ID → <b>Uncheck "Email notification"</b> → Submit.\n<br><br><b>Same for related for:</b><br>• Promo Codes → Apply Promo > X<br>• Equipments → Add-on Equipments > X<br>• GWP → Gift with Purchase > X<br><br>For <b>partially ceased</b>: only process remaining active items.<br><br> After submission, check the corresponding orders\' status on <b>FIfa360</b>'},
+g_ok:{gc:18,gr:8,t:'gw',l:'Services Ceased?',tip:'<span class="tt">Decision: Did Order Submit?</span>If <b>CSR</b>  is unable to submit cease order due to an  error → route to #NC for workaround\n<br><br>If orders on <b>FIfa360</b> stock in pending or with error → Diagnose Stuck Order'},
+verify:{gc:22,gr:8,t:'task',l:'Verify Completion',s:'F360 · CSR · CASA · NetCracker',tip:'<span class="tt">Verify Order Completion</span>All four criteria must be met:<br><br><b>1. F360:</b> Order status = "Processed"<br><b>2. NetCracker:</b> No active manual tasks, no Failed/Initiated Billing Action Logs<br><b>3. CSR:</b> Services removed from account<br><b>4. CASA:</b> BAN status inactive (if all services ceased)<br><br>If any fails, investigate before proceeding.'},
+g_res2:{gc:24,gr:8,t:'gw',l:'ResidualItems?',tip:'<span class="tt">Decision: Residual Items?</span>Check CSR for items not removed:<br><br><b>Agent-removable:</b><br>• Promo Code → Apply Promo > X<br>• Equipment → Add-on Equipment > X<br>• GWP → Gift with Purchase > X<br><br><b>Team-required:</b><br>• Shipment → Route #CEBO<br>• Service Agreement → Route #NC<br>• Compass (DT1) → OMNI or #CEBO'},
+fin:{gc:26,gr:8,t:'task',l:'Location Check + Credit',s:'F360 · Vegas Bill Calc',tip:'<span class="tt">Location Check + Credit</span><b>1. Location:</b> F360 → Location dropdown → Verify ALL items under address disconnected.<br><br><b>2. Credit:</b> Vegas Bill Calculator.<br>Formula: (Monthly charge ÷ Days in billing month) × Days of delay.<br>Billing runs <b>one month in advance</b>.<br><br>Check <b>Transaction History</b> in CASA first — if previous credit exists, only apply difference.<br><br>Example: $90/month, 6-day delay: $90÷31×6 = <b>$17.42</b><br><br><b>Skip credit</b> for Collection (C4) and Cancel Pending (C5).'},
+cls:{gc:28,gr:8,t:'task',l:'Document & Close',s:'CASA · Synapse · OPS Remedy',tip:'<span class="tt">Document & Close Ticket</span><b>1. Notify Customer</b> via GO/SEND confirming cease complete. Skip for C4/C5.<br><br><b>2. CASA Notes:</b> Full chronology — ticket #, EC ID, services, dates, delays, errors, credits, removals.<br><br><b>3. Synapse:</b> Resolution codes, action taken. <b>Close ticket.</b><br><br><b>4. OPS Remedy:</b> Final worklog. <b>Close ticket.</b><br><br><b>5. Google Form:</b> Log in Agent Productivity Tracker.'},
+end:{gc:30,gr:8,t:'event',l:'END',tip:'<span class="tt">Process End</span>Ticket fully resolved and closed in all systems.'},
+contact:{gc:6,gr:6,t:'task',l:'Contact Customer',s:'Phone · GO/SEND',tip:'<span class="tt">Contact Customer for Missing Info</span>Call during callable hours (<b>12 EST</b>) to clarify the request.<br><br><b>Reasons:</b> No submitter notes in CASA, unclear request, missing consent, conflicting info.<br><br><b>If no answer:</b> Voicemail + GO/SEND notification + CASA notes explaining info needed → <b>defer to next callable window</b>.<br><br>Once info obtained, update information and return to Review Request Details.'},
+ann_cm:{gc:12,gr:2,t:'ann',l:'Change of Mind',s:'C1 · Callback',tip:'<span class="tt">Path: Change of Mind (C1)</span><b>How to identify:</b> CASA/OPS Remedy notes show customer called back <b>after</b> original cease request to modify or cancel it.<br><br><b>Sub-paths:</b><br>• <b>→ Immediate</b> (was future-dated): Route #NC "force drop." Defer.<br>• <b>→ Future-Dated</b> (was immediate): If not processed, leave as-is. If stuck, route #NC to cancel.<br>• <b>→ Cancel Entirely:</b> If ceased → advise CX. If pending with error → route #NC.<br><br>After handling, proceed to verification.'},
+ann_wh:{gc:12,gr:4,t:'ann',l:'WHSIA Cease',s:'C2 · Tech Visit',tip:'<span class="tt">Path: WHSIA Cease (C2)</span><b>How to identify:</b> Request involves WHSIA (Wireless Home Internet) — mentions of IDU, ODU, outdoor unit, wireless home service.<br><br><b>Sub-paths:</b><br>• <b>Self-Install within 30-day trial:</b> Process cease → customer returns equipment.<br>• <b>Pro-Install within trial:</b> Process cease → call CX for disconnection appt → verify in DST.<br>• <b>Beyond trial:</b> Tech visit $200 at CX request. Route #NC Wireless to bypass and force-drop.<br><br>Continues through Process Cease → Verify flow.'},
+ann_col:{gc:12,gr:10,t:'ann',l:'Involuntary Cease',s:'C4 · Collection',tip:'<span class="tt">Path: Collection / Involuntary (C4)</span><b>How to identify:</b> OPS Remedy ticket from <b>Collections</b> dept. Notes reference non-payment or involuntary disconnection.<br><br><b>Differences:</b><br>• Process as <b>"Involuntary"</b> in CSR<br>• <b>No credit</b> needed<br>• <b>No customer notification</b><br>• Skip from Location Check to Document & Close'},
+ann_can:{gc:12,gr:12,t:'ann',l:'Cancel Pending',s:'C5',tip:'<span class="tt">Path: Cancel Pending Order (C5)</span><b>How to identify:</b> Submitter explicitly requests to <b>stop/cancel</b> an existing pending cease order — not to process a cease, but to undo one.<br><br><b>What to do:</b> Process cancellation in CSR → add submitter info → verify in F360.<br><br><b>Differences:</b> No credit, no customer notification typically needed.'},
+rnc:{gc:20,gr:6,t:'task',l:'Route to #NC',s:'CSR Error Workaround',tip:'<span class="tt">Route to #NC for CSR Error</span>Route via <b>OPS Remedy</b> to #NC team. Describe:<br>• What you were trying<br>• The exact error<br>• Which CSR page<br><br>After routing, proceed to Document Status & Defer — ticket ends for today.'},
+rmv:{gc:22,gr:6,t:'task',l:'Remove Items',s:'Agent-removable',tip:'<span class="tt">Remove Residual Items (Agent)</span>Agent-removable items in CSR:<br><br>• <b>Promo Code</b> → Apply Promo > X<br>• <b>Equipment</b> → Add-on Equipment > X<br>• <b>GWP</b> → Gift with Purchase > X<br><br>Add submitter → uncheck notification → submit → verify in F360.<br><br>After removal, return to <b>Verify Completion</b>.'},
+rt_res:{gc:22,gr:4,t:'task',l:'Route Residual to Team',s:'OPS Remedy',tip:'<span class="tt">Route Residual Items to Team</span>Items that require another team to remove:<br><br>• <b>Shipment</b> → Route to #CEBO<br>• <b>Service Agreement</b> → Route to #NC<br>• <b>Compass (DT1)</b> → OMNI or #CEBO<br><br>Route via OPS Remedy, then proceed to <b>Document Status & Defer</b>.'},
+diag:{gc:16,gr:10,t:'task',l:'Diagnose Stuck Order',s:'NetCracker · Error Lookup',tip:'<span class="tt">Diagnose Stuck Order</span>In <b>NetCracker</b>: EC ID → Errors section.<br><br><b>CRITICAL:</b> Only errors starting with "Error" are service-affecting. Ignore non-prefixed items.<br><br>Try <b>Retry</b> first. If unresolved, reference <b>ERROR and Manual Task in One Source</b> document to identify responsible team.<br><br>Check for <b>Failed/Initiated Billing Action Logs</b> (route to #NC Billing).'},
+g_fix:{gc:18,gr:10,t:'gw',l:'Agent\nCan Fix?',tip:'<span class="tt">Decision: Can Agent Resolve?</span>Check error type against <b>ERROR and Manual Task in One Source</b>:<br><br>• <b>Front Office tasks:</b> VEGAS agents handle directly<br>• <b>Other errors:</b> Route to responsible team<br>• <b>ASG/Core Copper:</b> Call queue directly'},
+hfo:{gc:20,gr:10,t:'task',l:'Handle Directly',s:'Front Office Task',tip:'<span class="tt">Handle Front Office Task</span>Manual tasks assigned to Front Office — VEGAS agents are trained on these.<br><br>Complete directly in the appropriate system, then proceed to verification.'},
+rtm:{gc:20,gr:12,t:'task',l:'Route to Team',s:'OPS Remedy / Synapse',tip:'<span class="tt">Route to External Team</span>Route via <b>OPS Remedy</b> to:<br><br>• <b>#CEBO</b> — Compass/shipment<br>• <b>#NC Fibre/Copper/Wireless</b> — Service errors<br>• <b>#CloudBSS</b> — Cloud billing<br>• <b>#ASG</b> — Copper HS/TV (call queue)<br>• <b>#NC Billing</b> — Billing Action Logs<br><br>After routing → Document & Defer.'},
+doc_defer:{gc:22,gr:12,t:'task',l:'Document Status & Defer',s:'CASA · Synapse · OPS Remedy',tip:'<span class="tt">Document Status & Defer</span>Ticket ends for today. Update all systems:<br><br><b>1. CASA Notes:</b> What was found, steps taken, team routed to, reason.<br><br><b>2. OPS Remedy:</b> Worklog detail. Status remains <b>"Open"</b>.<br><br><b>3. Synapse:</b> Status → <b>"Deferred"</b>, follow-up date = <b>next business day</b>.<br><br>External teams have <b>24-hour SLA</b>. Ticket reappears under your name tomorrow.'},
+notify_prog:{gc:24,gr:12,t:'task',l:'Notify CX: In Progress',s:'GO/SEND · SMS or Email',tip:'<span class="tt">Notify Customer: In Progress</span>Send via <b>GO/SEND</b> (SMS preferred, email for details).<br><br><b>Sample:</b> "Hi [Name], our team is working on your cancellation request. No action needed. We\'ll update you shortly."<br><br><b>Mandatory</b> — prevents repeat calls.<br><br><b>Skip</b> for Collection Cease (C4).'},
+end_defer:{gc:26,gr:12,t:'event',l:'END\n(Defer)',tip:'<span class="tt">End — Deferred to Next Day</span>Ticket parked. Tomorrow in Synapse, deferred tickets appear under your name. Pick up at <b>Review Request Details</b> to check external team response.'},
+vald:{gc:16,gr:14,t:'task',l:'Validate Future Date',s:'Pending · CSR + CASA',tip:'<span class="tt">Validate Future-Dated Order</span>In <b>CSR</b>: Verify future-dated cease order exists.<br>In <b>CASA/OPS Remedy</b>: Confirm due date matches customer request.<br><br>Verify all services included in sales order.<br><br>In <b>NetCracker</b>: Check for blocking manual tasks or Failed Billing Action Logs.'},
+g_dt:{gc:18,gr:14,t:'gw',l:'Past\nDue?',tip:'<span class="tt">Decision: Is Due Date Past?</span>• <b>Still future (Valid):</b> Correctly scheduled — document and close.<br>• <b>Already passed (Past Due):</b> Should have dropped but didn\'t — treat as stuck order, diagnose error.'},
+dt1:{gc:16,gr:16,t:'task',l:'Investigate via DT1',s:'BAN Open · Desktop One',tip:'<span class="tt">Investigate BAN Open via DT1</span>Services ceased but <b>BAN</b> remains active.<br><br><b>DT1:</b> EC ID → Look for standalone <b>Compass equipment</b>.<br><br>If found: Process via <b>OMNI Ordering</b>. Check status "DONE" = success.<br><br>If other status: Route to <b>#CEBO</b>.<br><span class="tq">Open question: Spock Team (e-Remedy) vs #CEBO for DT1 removal.</span>'},
+};
+
+const E=[
+{id:'e01',f:'start',t:'receive'},
+{id:'e02',f:'receive',t:'review'},
+{id:'e03',f:'review',t:'g_info'},
+{id:'e03c',f:'g_info',t:'assess',lb:'Complete'},
+{id:'e04',f:'assess',t:'g_req'},
+{id:'e05',f:'g_req',t:'ann_std',lb:'Standard'},
+{id:'e05b',f:'ann_std',t:'g_st'},
+{id:'e20',f:'g_st',t:'proc',lb:'Active'},
+{id:'e30',f:'proc',t:'g_ok'},
+{id:'e33',f:'g_ok',t:'verify',lb:'OK'},
+{id:'e70',f:'verify',t:'g_res2'},
+{id:'e72',f:'g_res2',t:'fin',lb:'None'},
+{id:'e74',f:'fin',t:'cls'},
+{id:'e75',f:'cls',t:'end'},
+
+{id:'e03a',f:'g_info',t:'contact',fp:'top',tp:'bottom',lb:'Missing'},
+{id:'e03b',f:'contact',t:'review',fp:'left',tp:'top',gwp:[[4,6]]},
+
+{id:'e11',f:'g_req',t:'ann_cm',fp:'top',tp:'bottom',gwp:[[10,2],[12,2]]},
+{id:'e12',f:'g_req',t:'ann_wh',fp:'top',tp:'bottom',gwp:[[10,4],[12,4]]},
+{id:'e13',f:'g_req',t:'ann_col',fp:'bottom',tp:'top',gwp:[[10,10],[12,10]]},
+{id:'e14',f:'g_req',t:'ann_can',fp:'bottom',tp:'top',gwp:[[10,12],[12,12]]},
+
+{id:'e60',f:'ann_cm',t:'verify',fp:'right',tp:'left',gwp:[[21,2],[21,8]]},
+{id:'e61',f:'ann_wh',t:'proc',fp:'right',tp:'top',gwp:[[16,4]]},
+{id:'e62',f:'ann_col',t:'proc',fp:'right',tp:'bottom',gwp:[[13,10],[13,9],[16,9]]},
+{id:'e63',f:'ann_can',t:'verify',fp:'right',tp:'bottom',gwp:[[13,12],[13,13],[23,13],[23,9],[22,9]]},
+
+{id:'e24',f:'g_st',t:'verify',fp:'right',tp:'left',lb:'Already\nCeased',gwp:[[15,8],[15,7],[21,7],[21,8]]},
+
+{id:'e21',f:'g_st',t:'diag',fp:'bottom',tp:'left',lb:'Stuck',gwp:[[14,10]]},
+{id:'e22',f:'g_st',t:'vald',fp:'bottom',tp:'left',lb:'Pending',gwp:[[14,14]]},
+{id:'e23',f:'g_st',t:'dt1',fp:'bottom',tp:'left',lb:'BAN Open',gwp:[[14,16]]},
+
+{id:'e31',f:'g_ok',t:'rnc',fp:'top',tp:'left',lb:'CSR error',gwp:[[18,6]]},
+{id:'e34',f:'g_ok',t:'diag',fp:'bottom',tp:'top',lb:'F360\nerror',gwp:[[18,9],[16,9]]},
+{id:'e32',f:'rnc',t:'doc_defer',fp:'bottom',tp:'left',gwp:[[20,7],[21,7],[21,12]]},
+
+{id:'e40',f:'diag',t:'g_fix'},
+{id:'e41',f:'g_fix',t:'hfo',lb:'Yes'},
+{id:'e42',f:'hfo',t:'verify',fp:'right',tp:'bottom',gwp:[[22,10]]},
+{id:'e43',f:'g_fix',t:'rtm',fp:'bottom',tp:'left',lb:'Route',gwp:[[18,12]]},
+{id:'e44',f:'rtm',t:'doc_defer'},
+
+{id:'e80',f:'doc_defer',t:'notify_prog'},
+{id:'e81',f:'notify_prog',t:'end_defer'},
+
+{id:'e50',f:'vald',t:'g_dt'},
+{id:'e51',f:'g_dt',t:'cls',fp:'right',tp:'bottom',lb:'Valid FD',gwp:[[28,14]]},
+{id:'e52',f:'g_dt',t:'diag',fp:'left',tp:'bottom',lb:'Past Due',gwp:[[17,14],[17,11],[16,11]]},
+
+{id:'e55',f:'dt1',t:'verify',fp:'right',tp:'bottom',gwp:[[23,16],[23,9],[22,9]]},
+
+{id:'e71a',f:'g_res2',t:'rmv',fp:'top',tp:'right',lb:'Agent\nremovable',gwp:[[24,6]]},
+{id:'e71b',f:'g_res2',t:'rt_res',fp:'top',tp:'right',lb:'Team\nneeded',gwp:[[24,4]]},
+{id:'e73',f:'rmv',t:'verify',fp:'bottom',tp:'top'},
+{id:'e82',f:'rt_res',t:'doc_defer',fp:'left',tp:'left',gwp:[[21,4],[21,12]]},
+];
+
+const S=[
+{id:'a1',nm:'Active Service',fr:'10%',cat:'A',c:'#16a34a',bg:'#dcfce7',dk:'#14532d',d:'Services still active, no stuck/pending orders. Process cease in CSR, verify, close.',n:['start','receive','review','g_info','assess','g_req','ann_std','g_st','proc','g_ok','verify','g_res2','fin','cls','end'],e:['e01','e02','e03','e03c','e04','e05','e05b','e20','e30','e33','e70','e72','e74','e75'],st:['Receive ticket via Synapse','Review request in OPS Remedy + CASA','Info complete →Assess: CSR (active) + F360 (no orders)','Process cease in CSR →submit','Order OK →verify in F360','No residual items →location check + credit →close']},
+
+{id:'a1e',nm:'Active + CSR Error',fr:'(sub)',cat:'A',c:'#15803d',bg:'#d1fae5',dk:'#052e16',d:'CSR error on submission. Route to #NC, defer, follow up next day.',n:['start','receive','review','g_info','assess','g_req','ann_std','g_st','proc','g_ok','rnc','doc_defer','notify_prog','end_defer'],e:['e01','e02','e03','e03c','e04','e05','e05b','e20','e30','e31','e32','e80','e81'],st:['Receive + review + assess →active services','Process cease →CSR error','Route #NC →Document & Defer →Notify CX →END','Next day: pick up →Review →check #NC response →retry']},
+
+{id:'a1f',nm:'Active + F360 Error',fr:'(sub)',cat:'A',c:'#166534',bg:'#dcfce7',dk:'#052e16',d:'Order submitted but stuck in F360. Diagnose stuck order, route or fix.',n:['start','receive','review','g_info','assess','g_req','ann_std','g_st','proc','g_ok','diag','g_fix','rtm','doc_defer','notify_prog','end_defer'],e:['e01','e02','e03','e03c','e04','e05','e05b','e20','e30','e34','e40','e43','e44','e80','e81'],st:['Receive + review + assess →active services','Process cease →F360 order stuck/error','Diagnose stuck order →route team','Document & Defer →Notify CX →END']},
+
+{id:'a2',nm:'Already Ceased',fr:'50%',cat:'A',c:'#2563eb',bg:'#dbeafe',dk:'#1e3a5f',d:'Most common. Services already disconnected — verify, credit, close.',n:['start','receive','review','g_info','assess','g_req','ann_std','g_st','verify','g_res2','fin','cls','end'],e:['e01','e02','e03','e03c','e04','e05','e05b','e24','e70','e72','e74','e75'],st:['Receive + review + assess →already ceased','Skip to verification (bypass above spine)','Verify F360/NetCracker/CSR/CASA','Location check + credit →notify →close']},
+
+{id:'a3',nm:'Partially Ceased',fr:'1%',cat:'A',c:'#059669',bg:'#d1fae5',dk:'#064e3b',d:'Some services remain active. Cease remaining, then standard closing.',n:['start','receive','review','g_info','assess','g_req','ann_std','g_st','proc','g_ok','verify','g_res2','fin','cls','end'],e:['e01','e02','e03','e03c','e04','e05','e05b','e20','e30','e33','e70','e72','e74','e75'],st:['Receive + review + assess →some active','Process cease for remaining items','Verify →location + credit →close']},
+
+{id:'a4',nm:'Dangling Items (Agent)',fr:'4%',cat:'A',c:'#7c3aed',bg:'#ede9fe',dk:'#3b0764',d:'Services ceased but promo/equipment/GWP persists — agent removes directly.',n:['start','receive','review','g_info','assess','g_req','ann_std','g_st','verify','g_res2','rmv','verify','g_res2','fin','cls','end'],e:['e01','e02','e03','e03c','e04','e05','e05b','e24','e70','e71a','e73','e70','e72','e74','e75'],st:['Receive + review + assess →services ceased, items remain','Verify →residual agent-removable items detected','Remove items (Promo/Equipment/GWP) →return to Verify','No more items →location + credit →close']},
+
+{id:'a4t',nm:'Dangling Items (Team)',fr:'1%',cat:'A',c:'#6d28d9',bg:'#ede9fe',dk:'#3b0764',d:'Services ceased but shipment/SA/Compass persists — route to team, defer.',n:['start','receive','review','g_info','assess','g_req','ann_std','g_st','verify','g_res2','rt_res','doc_defer','notify_prog','end_defer'],e:['e01','e02','e03','e03c','e04','e05','e05b','e24','e70','e71b','e82','e80','e81'],st:['Receive + review + assess →services ceased, team-required items remain','Verify →residual items need team action','Route to team (Shipment/SA/Compass) →Document & Defer →Notify CX →END']},
+
+{id:'b1',nm:'Stuck Order',fr:'25%',cat:'B',c:'#d97706',bg:'#fef3c7',dk:'#78350f',d:'Order stuck in Processing. Diagnose, route to team, defer. Next day: follow up.',n:['start','receive','review','g_info','assess','g_req','ann_std','g_st','diag','g_fix','rtm','doc_defer','notify_prog','end_defer'],e:['e01','e02','e03','e03c','e04','e05','e05b','e21','e40','e43','e44','e80','e81'],st:['Receive + review + assess →stuck order','Diagnose in NetCracker →identify team','Route →Document & Defer →Notify CX →END','Next day: pick up →Review →check response']},
+
+{id:'b1f',nm:'Stuck + Front Office',fr:'(sub)',cat:'B',c:'#b45309',bg:'#fef3c7',dk:'#78350f',d:'Stuck order with Front Office task — agent handles directly.',n:['start','receive','review','g_info','assess','g_req','ann_std','g_st','diag','g_fix','hfo','verify','g_res2','fin','cls','end'],e:['e01','e02','e03','e03c','e04','e05','e05b','e21','e40','e41','e42','e70','e72','e74','e75'],st:['Receive + review + assess →stuck order','Diagnose →Front Office task','Handle directly →verify →close']},
+
+{id:'b2',nm:'Pending — Valid FD',fr:'2%',cat:'B',c:'#ea580c',bg:'#ffedd5',dk:'#7c2d12',d:'Future-dated cease with valid date. Validate, document, close.',n:['start','receive','review','g_info','assess','g_req','ann_std','g_st','vald','g_dt','cls','end'],e:['e01','e02','e03','e03c','e04','e05','e05b','e22','e50','e51','e75'],st:['Receive + review + assess →pending order','Validate date matches request','No blockers →document & close']},
+
+{id:'b2p',nm:'Pending — Past Due',fr:'(sub)',cat:'B',c:'#c2410c',bg:'#fed7aa',dk:'#7c2d12',d:'Due date passed, order didn\'t drop. Treat as stuck →route & defer.',n:['start','receive','review','g_info','assess','g_req','ann_std','g_st','vald','g_dt','diag','g_fix','rtm','doc_defer','notify_prog','end_defer'],e:['e01','e02','e03','e03c','e04','e05','e05b','e22','e50','e52','e40','e43','e44','e80','e81'],st:['Receive + review + assess →pending, past due','Diagnose as stuck →route team','Document & Defer →Notify →END']},
+
+{id:'c1',nm:'Change of Mind',fr:'1%',cat:'C',c:'#db2777',bg:'#fce7f3',dk:'#831843',d:'Customer called back to modify/cancel cease. Multiple sub-paths.',n:['start','receive','review','g_info','assess','g_req','ann_cm','verify','g_res2','fin','cls','end'],e:['e01','e02','e03','e03c','e04','e11','e60','e70','e72','e74','e75'],st:['Receive + review →change of mind','Handle per sub-path','Verify →location + credit →close']},
+
+{id:'c2',nm:'WHSIA / Tech Visit',fr:'1%',cat:'C',c:'#a21caf',bg:'#fae8ff',dk:'#4a044e',d:'WHSIA cease with equipment removal. Varies by install type.',n:['start','receive','review','g_info','assess','g_req','ann_wh','proc','g_ok','verify','g_res2','fin','cls','end'],e:['e01','e02','e03','e03c','e04','e12','e61','e30','e33','e70','e72','e74','e75'],st:['Receive + review →WHSIA identified','Process cease in CSR','Handle equipment →verify →close']},
+
+{id:'c3',nm:'BAN Remained Open',fr:'1%',cat:'C',c:'#dc2626',bg:'#fee2e2',dk:'#7f1d1d',d:'Services ceased but BAN active — standalone Compass in DT1.',n:['start','receive','review','g_info','assess','g_req','ann_std','g_st','dt1','verify','g_res2','fin','cls','end'],e:['e01','e02','e03','e03c','e04','e05','e05b','e23','e55','e70','e72','e74','e75'],st:['Receive + review + assess →BAN open','DT1 →find Compass →OMNI or #CEBO','Verify →location + credit →close']},
+
+{id:'c4',nm:'Collection Cease',fr:'1%',cat:'C',c:'#475569',bg:'#f1f5f9',dk:'#0f172a',d:'Involuntary cease from Collections. No credit or notification.',n:['start','receive','review','g_info','assess','g_req','ann_col','proc','g_ok','verify','g_res2','fin','cls','end'],e:['e01','e02','e03','e03c','e04','e13','e62','e30','e33','e70','e72','e74','e75'],st:['Receive + review →collection cease','Process as Involuntary in CSR','Verify →location (skip credit/notify) →close']},
+
+{id:'c5',nm:'Cancel Pending',fr:'1%',cat:'C',c:'#0891b2',bg:'#cffafe',dk:'#164e63',d:'Stop an existing pending cease order. Cancel, verify, close.',n:['start','receive','review','g_info','assess','g_req','ann_can','verify','g_res2','fin','cls','end'],e:['e01','e02','e03','e03c','e04','e14','e63','e70','e72','e74','e75'],st:['Receive + review →cancel pending request','Process cancellation in CSR','Verify →location (skip credit/notify) →close']},
+];
+
+const dg=document.getElementById('diagram');
+const svg=document.getElementById('edges-svg');
+const tipEl=document.getElementById('tip');
+
+const cw=OX+(GCOLS+1)*GX+OX;
+const ch=OY+(GROWS+1)*GY+OY;
+dg.style.width=cw+'px';
+dg.style.height=ch+'px';
+
+for(let gc=0;gc<=GCOLS;gc++){for(let gr=0;gr<=GROWS;gr++){const p=gp(gc,gr);const c=document.createElementNS('http://www.w3.org/2000/svg','circle');c.setAttribute('cx',p.x);c.setAttribute('cy',p.y);c.setAttribute('r','2.5');c.setAttribute('class','gdot');svg.appendChild(c);}}
+
+for(const[id,n] of Object.entries(N)){const p=gp(n.gc,n.gr);const s=SZ[n.t];n.x=p.x-s.w/2; n.y=p.y-s.h/2;n.w=s.w; n.h=s.h;n.cx=p.x; n.cy=p.y;}
+
+function port(n,side){switch(side){case'top':return{x:n.cx,y:n.cy-n.h/2};case'bottom':return{x:n.cx,y:n.cy+n.h/2};case'left':return{x:n.cx-n.w/2,y:n.cy};case'right':return{x:n.cx+n.w/2,y:n.cy};}}
+
+// Get raw point array for an edge (before rendering)
+function getEdgePts(e){
+  const fn=N[e.f],tn=N[e.t];
+  const fp=e.fp||'right',tp=e.tp||'left';
+  const f=port(fn,fp),t=port(tn,tp);
+  const pts=[f];
+  if(e.gwp) for(const g of e.gwp) pts.push(gp(g[0],g[1]));
+  pts.push(t);
+  if(pts.length===2){
+    const dx=Math.abs(f.x-t.x),dy=Math.abs(f.y-t.y);
+    if(dx<4||dy<4) return pts;
+    if((fp==='right'||fp==='left')&&(tp==='right'||tp==='left')){
+      const mx=(f.x+t.x)/2; return [f,{x:mx,y:f.y},{x:mx,y:t.y},t];
+    }
+    if((fp==='top'||fp==='bottom')&&(tp==='top'||tp==='bottom')){
+      const my=(f.y+t.y)/2; return [f,{x:f.x,y:my},{x:t.x,y:my},t];
+    }
+    if((fp==='top'||fp==='bottom')&&(tp==='left'||tp==='right')){
+      return [f,{x:f.x,y:t.y},t];
+    }
+    if((fp==='left'||fp==='right')&&(tp==='top'||tp==='bottom')){
+      return [f,{x:t.x,y:f.y},t];
+    }
+  }
+  return pts;
+}
+
+// Get line segments from point array
+function getSegs(pts){
+  const s=[];
+  for(let i=0;i<pts.length-1;i++) s.push({x1:pts[i].x,y1:pts[i].y,x2:pts[i+1].x,y2:pts[i+1].y,idx:i});
+  return s;
+}
+
+// Check horizontal-vertical intersection (strict interior only)
+function hvX(h,v){
+  const eps=5;
+  const mnX=Math.min(h.x1,h.x2),mxX=Math.max(h.x1,h.x2);
+  const mnY=Math.min(v.y1,v.y2),mxY=Math.max(v.y1,v.y2);
+  if(v.x1>mnX+eps && v.x1<mxX-eps && h.y1>mnY+eps && h.y1<mxY-eps)
+    return {x:v.x1,y:h.y1};
+  return null;
+}
+
+// Build SVG path with curved corners AND jump arcs at crossings
+function buildPath(pts,jumpsMap,cR,jR){
+  cR=cR||18; jR=jR||8;
+  if(pts.length<2) return '';
+  let d=`M${pts[0].x},${pts[0].y}`;
+  let cx=pts[0].x,cy=pts[0].y;
+  for(let i=0;i<pts.length-1;i++){
+    const tgt=pts[i+1];
+    const jmps=(jumpsMap&&jumpsMap[i])||[];
+    let ex=tgt.x,ey=tgt.y,hasC=false,qx,qy,cex,cey;
+    // Check for curved corner at target point
+    if(i<pts.length-2){
+      const aft=pts[i+2];
+      const d1x=tgt.x-pts[i].x,d1y=tgt.y-pts[i].y;
+      const d2x=aft.x-tgt.x,d2y=aft.y-tgt.y;
+      if(Math.abs(d1x*d2y-d1y*d2x)>=0.1){
+        hasC=true;
+        const l1=Math.sqrt(d1x*d1x+d1y*d1y),l2=Math.sqrt(d2x*d2x+d2y*d2y);
+        const r=Math.min(cR,l1/2,l2/2);
+        ex=tgt.x-(d1x/l1)*r; ey=tgt.y-(d1y/l1)*r;
+        qx=tgt.x; qy=tgt.y;
+        cex=tgt.x+(d2x/l2)*r; cey=tgt.y+(d2y/l2)*r;
+      }
+    }
+    // Insert jump arcs along this segment
+    const isH=Math.abs(pts[i].y-tgt.y)<1, isV=Math.abs(pts[i].x-tgt.x)<1;
+    if(jmps.length>0){
+      const fj=jmps.filter(j=>{
+        if(isH){const mn=Math.min(cx,ex),mx=Math.max(cx,ex);return j.x>mn+jR+2&&j.x<mx-jR-2;}
+        if(isV){const mn=Math.min(cy,ey),mx=Math.max(cy,ey);return j.y>mn+jR+2&&j.y<mx-jR-2;}
+        return false;
+      });
+      if(isH&&fj.length){
+        const dr=ex>cx?1:-1;
+        fj.sort((a,b)=>(a.x-b.x)*dr);
+        for(const j of fj){d+=` L${j.x-jR*dr},${j.y} A${jR},${jR} 0 0 ${dr>0?0:1} ${j.x+jR*dr},${j.y}`;}
+      } else if(isV&&fj.length){
+        const dr=ey>cy?1:-1;
+        fj.sort((a,b)=>(a.y-b.y)*dr);
+        for(const j of fj){d+=` L${j.x},${j.y-jR*dr} A${jR},${jR} 0 0 ${dr>0?1:0} ${j.x},${j.y+jR*dr}`;}
+      }
+    }
+    d+=` L${ex},${ey}`;
+    if(hasC){d+=` Q${qx},${qy} ${cex},${cey}`;cx=cex;cy=cey;}
+    else{cx=ex;cy=ey;}
+  }
+  return d;
+}
+
+for(const[id,n]of Object.entries(N)){const el=document.createElement('div');const cls=n.t==='gw'?'gw':n.t;el.className=`nd ${cls}`;el.id=`n-${id}`;el.style.cssText=`left:${n.x}px;top:${n.y}px;width:${n.w}px;height:${n.h}px`;if(n.tip)el.dataset.tip=n.tip;if(n.t==='gw'){el.innerHTML=`<div class="gi"><div class="nl">${n.l}</div></div>${n.tip?'<i class="ii">i</i>':''}`;} else{let h=`<div class="nl">${n.l}</div>`;if(n.s)h+=`<div class="ns">${n.s}</div>`;if(n.tip)h+=`<i class="ii">i</i>`;el.innerHTML=h;}el.addEventListener('mouseenter',showTip);el.addEventListener('mousemove',moveTip);el.addEventListener('mouseleave',hideTip);dg.appendChild(el);}
+
+// ═══════════════════════════════════════
+// CROSSING DETECTION & EDGE RENDERING
+// ═══════════════════════════════════════
+// Pass 1: compute all edge point arrays
+const allPts={};
+for(const e of E) allPts[e.id]=getEdgePts(e);
+
+// Pass 2: find all crossings between edges
+const allJumps={}; // edgeId -> { segIdx -> [{x,y}] }
+const allSegs={};
+for(const e of E) allSegs[e.id]=getSegs(allPts[e.id]);
+
+for(let i=0;i<E.length;i++){
+  for(let j=i+1;j<E.length;j++){
+    const id1=E[i].id,id2=E[j].id;
+    for(const s1 of allSegs[id1]){
+      const isH1=Math.abs(s1.y1-s1.y2)<1,isV1=Math.abs(s1.x1-s1.x2)<1;
+      for(const s2 of allSegs[id2]){
+        const isH2=Math.abs(s2.y1-s2.y2)<1,isV2=Math.abs(s2.x1-s2.x2)<1;
+        let pt=null;
+        if(isH1&&isV2) pt=hvX(s1,s2);
+        else if(isV1&&isH2) pt=hvX(s2,s1);
+        if(pt){
+          // Later edge (j) gets the jump arc
+          if(!allJumps[id2]) allJumps[id2]={};
+          if(!allJumps[id2][s2.idx]) allJumps[id2][s2.idx]=[];
+          allJumps[id2][s2.idx].push(pt);
+        }
+      }
+    }
+  }
+}
+
+// Pass 3: render edges with curved corners + jump arcs
+for(const e of E){
+  const p=document.createElementNS('http://www.w3.org/2000/svg','path');
+  p.setAttribute('d',buildPath(allPts[e.id],allJumps[e.id]));
+  let cls='edge';if(e.da)cls+=' dashed';
+  p.setAttribute('class',cls);p.id=`e-${e.id}`;
+  p.setAttribute('marker-end','url(#aw)');
+  svg.appendChild(p);
+  if(e.lb){
+    const fn=N[e.f],fp=e.fp||'right';const f=port(fn,fp);
+    let lx,ly;
+    if(e.gwp&&e.gwp.length){const w=gp(e.gwp[0][0],e.gwp[0][1]);lx=(f.x+w.x)/2;ly=(f.y+w.y)/2;}
+    else{const tn=N[e.t],tp=e.tp||'left';const t=port(tn,tp);lx=(f.x+t.x)/2;ly=(f.y+t.y)/2;}
+    const tx=document.createElementNS('http://www.w3.org/2000/svg','text');
+    tx.setAttribute('x',lx+4);tx.setAttribute('y',ly-4);
+    tx.setAttribute('class','elbl');tx.id=`l-${e.id}`;
+    tx.textContent=e.lb.replace(/\n/g,' ');svg.appendChild(tx);
+  }
+}
+
+function showTip(ev){const t=ev.currentTarget.dataset.tip;if(t){tipEl.innerHTML=t;tipEl.style.display='block';}}
+function moveTip(ev){let x=ev.clientX+16,y=ev.clientY+16;const tw=tipEl.offsetWidth,th=tipEl.offsetHeight;if(x+tw>window.innerWidth-10)x=ev.clientX-tw-10;if(y+th>window.innerHeight-10)y=ev.clientY-th-10;tipEl.style.left=x+'px';tipEl.style.top=y+'px';}
+function hideTip(){tipEl.style.display='none';}
+
+const slist=document.getElementById('slist');const det=document.getElementById('det');const rb=document.getElementById('rb');let curS=null;
+
+for(const sc of S){const el=document.createElement('div');el.className='si';el.id=`s-${sc.id}`;el.style.setProperty('--sc',sc.c);el.style.setProperty('--sc-bg',sc.bg);const cc=sc.cat==='A'?'cA':sc.cat==='B'?'cB':'cC';el.innerHTML=`<div class="sd" style="background:${sc.c}"></div><span class="sn">${sc.nm}</span><span class="sc ${cc}">${sc.cat}</span><span class="sf">${sc.fr}</span>`;el.onclick=()=>selSc(sc);slist.appendChild(el);}
+
+function selSc(sc){curS=sc;document.documentElement.style.setProperty('--sc',sc.c);document.documentElement.style.setProperty('--sc-bg',sc.bg);document.documentElement.style.setProperty('--sc-dk',sc.dk);document.querySelectorAll('.si').forEach(el=>{el.classList.toggle('sel',el.id===`s-${sc.id}`);if(el.id===`s-${sc.id}`){el.style.setProperty('--sc',sc.c);el.style.setProperty('--sc-bg',sc.bg);}});const an=new Set(sc.n),ae=new Set(sc.e);for(const[id]of Object.entries(N)){const el=document.getElementById(`n-${id}`);el.classList.remove('active','dimmed');if(an.has(id)){el.classList.add('active');el.style.setProperty('--sc',sc.c);el.style.setProperty('--sc-bg',sc.bg);el.style.setProperty('--sc-dk',sc.dk);}else el.classList.add('dimmed');}for(const e of E){const p=document.getElementById(`e-${e.id}`);const lb=document.getElementById(`l-${e.id}`);p.classList.remove('active','dimmed');if(lb)lb.classList.remove('active','dimmed');if(ae.has(e.id)){p.classList.add('active');p.style.stroke=sc.c;const mk=mkMarker(sc.c,e.id);svg.querySelector('defs').appendChild(mk);p.setAttribute('marker-end',`url(#a-${e.id})`);if(lb){lb.classList.add('active');lb.style.fill=sc.dk;}}else{p.classList.add('dimmed');p.style.stroke='';p.setAttribute('marker-end','url(#aw)');if(lb){lb.classList.add('dimmed');lb.style.fill='';}}};det.classList.add('vis');det.innerHTML=`<h3 style="color:${sc.dk}">${sc.nm} <span style="font-weight:400;font-size:10px;color:${sc.c}">${sc.fr}</span></h3><div class="dd">${sc.d}</div><div class="stl">Path Steps</div>${sc.st.map((s,i)=>`<div class="sti"><div class="stnum" style="background:${sc.bg};color:${sc.dk};border-color:${sc.c}">${i+1}</div><div>${s}</div></div>`).join('')}`;rb.classList.add('vis');}
+
+function clearSel(){curS=null;document.querySelectorAll('.si').forEach(el=>el.classList.remove('sel'));for(const[id]of Object.entries(N)){const el=document.getElementById(`n-${id}`);el.classList.remove('active','dimmed');}for(const e of E){const p=document.getElementById(`e-${e.id}`);const lb=document.getElementById(`l-${e.id}`);p.classList.remove('active','dimmed');p.style.stroke='';p.setAttribute('marker-end','url(#aw)');if(lb){lb.classList.remove('active','dimmed');lb.style.fill='';}}det.classList.remove('vis');det.innerHTML='';rb.classList.remove('vis');svg.querySelectorAll('marker[id^="a-e"]').forEach(m=>m.remove());}
+
+function mkMarker(c,eid){const old=svg.querySelector(`#a-${eid}`);if(old)old.remove();const m=document.createElementNS('http://www.w3.org/2000/svg','marker');m.setAttribute('id',`a-${eid}`);m.setAttribute('markerWidth','7');m.setAttribute('markerHeight','5');m.setAttribute('refX','6');m.setAttribute('refY','2.5');m.setAttribute('orient','auto');const pg=document.createElementNS('http://www.w3.org/2000/svg','polygon');pg.setAttribute('points','0 0,7 2.5,0 5');pg.setAttribute('fill',c);m.appendChild(pg);return m;}
+
+// ═══════════════════════════════════════
+// EDIT MODE
+// ═══════════════════════════════════════
+let editMode=false;
+let editNodeId=null;
+
+function toggleEdit(){
+  editMode=!editMode;
+  document.body.classList.toggle('editmode',editMode);
+  document.getElementById('edit-toggle').classList.toggle('on',editMode);
+  document.getElementById('export-btn').style.display=editMode?'inline-block':'none';
+  // Clear any active scenario selection when entering edit mode
+  if(editMode && curS) clearSel();
+}
+
+// Attach edit click handlers to all nodes
+for(const[id,n]of Object.entries(N)){
+  const el=document.getElementById(`n-${id}`);
+  el.addEventListener('click',function(ev){
+    if(!editMode) return;
+    ev.stopPropagation();
+    openEdit(id);
+  });
+}
+
+function openEdit(id){
+  editNodeId=id;
+  const n=N[id];
+  document.getElementById('emodal-id').textContent=id;
+  document.getElementById('ef-label').value=n.l||'';
+  document.getElementById('ef-sub').value=n.s||'';
+  document.getElementById('ef-tip').value=n.tip||'';
+  document.getElementById('emodal-bg').classList.add('vis');
+  document.getElementById('ef-label').focus();
+}
+
+function closeEdit(){
+  document.getElementById('emodal-bg').classList.remove('vis');
+  editNodeId=null;
+}
+
+function saveEdit(){
+  if(!editNodeId) return;
+  const n=N[editNodeId];
+  const newLabel=document.getElementById('ef-label').value;
+  const newSub=document.getElementById('ef-sub').value;
+  const newTip=document.getElementById('ef-tip').value;
+  // Update data
+  n.l=newLabel;
+  n.s=newSub||undefined;
+  n.tip=newTip||undefined;
+  // Re-render the node element
+  const el=document.getElementById(`n-${editNodeId}`);
+  if(n.t==='gw'){
+    el.innerHTML=`<div class="gi"><div class="nl">${n.l}</div></div>${n.tip?'<i class="ii">i</i>':''}`;
+  } else {
+    let h=`<div class="nl">${n.l}</div>`;
+    if(n.s) h+=`<div class="ns">${n.s}</div>`;
+    if(n.tip) h+=`<i class="ii">i</i>`;
+    el.innerHTML=h;
+  }
+  // Update tooltip data attribute
+  if(n.tip) el.dataset.tip=n.tip;
+  else delete el.dataset.tip;
+  closeEdit();
+}
+
+// ═══════════════════════════════════════
+// EXPORT
+// ═══════════════════════════════════════
+function showExport(){
+  let code='const N={\n';
+  const ids=Object.keys(N);
+  for(let i=0;i<ids.length;i++){
+    const id=ids[i];
+    const n=N[id];
+    // Build the node definition string
+    let parts=[`gc:${n.gc}`,`gr:${n.gr}`,`t:'${n.t}'`,`l:'${n.l.replace(/'/g,"\\'")}'`];
+    if(n.s) parts.push(`s:'${n.s.replace(/'/g,"\\'")}'`);
+    if(n.tip){
+      // Escape single quotes and newlines in tip
+      const tipStr=n.tip.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,'\\n');
+      parts.push(`tip:'${tipStr}'`);
+    }
+    code+=`${id}:{${parts.join(',')}},\n`;
+  }
+  code+='};\n';
+  document.getElementById('xmodal-code').value=code;
+  document.getElementById('xmodal-bg').classList.add('vis');
+}
+
+function closeExport(){
+  document.getElementById('xmodal-bg').classList.remove('vis');
+}
+
+function copyExport(){
+  const ta=document.getElementById('xmodal-code');
+  ta.select();
+  document.execCommand('copy');
+  const btn=document.querySelector('#xmodal-foot .copy');
+  const orig=btn.textContent;
+  btn.textContent='Copied!';
+  setTimeout(()=>btn.textContent=orig,1500);
+}
+
+// Keyboard shortcut: Escape closes modals
+document.addEventListener('keydown',function(ev){
+  if(ev.key==='Escape'){
+    if(document.getElementById('emodal-bg').classList.contains('vis')) closeEdit();
+    else if(document.getElementById('xmodal-bg').classList.contains('vis')) closeExport();
+  }
+});
+</script>
+</body>
+</html>
